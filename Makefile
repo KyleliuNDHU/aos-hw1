@@ -1,7 +1,7 @@
 CC	= gcc
-CFLAGS	= -std=c11 -Wall -Wextra -02 -g
+CFLAGS	= -std=c11 -Wall -Wextra -O2 -g
 SRC	= $(wildcard src/*.c)
-OBJ	= $(SRC:.c:.o)
+OBJ	= $(SRC:.c=.o)
 TARGET	= pagesim.exe
 
 all: $(TARGET)
