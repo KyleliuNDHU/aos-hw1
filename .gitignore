@@ -1,0 +1,5 @@
+*.o
+*.exe
+results/*.csv
+figures/*.png
+__pycache__/
