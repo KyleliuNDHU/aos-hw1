@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include "sim.h"
 #include "policy.h"
+#include "refgen.h"
 
 //return the frame index of page locate at; if miss: return -1
 static int findPage(const Frame *frame, int nframes, int page)
@@ -54,36 +55,36 @@ Stats simulate (int nframes, long n, Ref *refs, Policy *policy)
         }
 
         long i;
-        for(i=0; i<n; i++)
+        for(i=0; i < n; i++)
         {
-                int idx = findPage(frame, nframes, refs[i]);
+                int idx = findPage(frame, nframes, refs[i].page);
                 if(idx >= 0)    // Hit
                 {
                         if(refs[i].is_write)frame[idx].dirty = 1;
                         if(policy->on_hit != NULL)
-                                policy->on_hit(frame, idx, policy->state)
+                                policy->on_hit(frame, idx, policy->state);
                 }
                 else // Miss
                 {
                         int slot = findEmpty(frame, nframes);
                         if(slot < 0) // no empty frame, need to choose a victim
                         {
-                                slot = Policy->victim(frame, nframes, policy->state);
+                                slot = policy->victim(frame, nframes, policy->state);
                                 if(frame[slot].dirty)
                                 {
-                                        st[1]++; // disk_writes++, os need to write the modified data back to disk.
-                                        st[2]++; // interrupts++
+                                        st.disk_writes++;
+                                        st.interrupts++;
                                 }
                         }
 
-                        frame[slot].page = refs[i];
+                        frame[slot].page = refs[i].page;
                         if(refs[i].is_write) frame[slot].dirty = 1;
-                        else frames[slot].dirty = 0;
-                        frame[slot].ref_bit = 1;
-                        frame[slot].count++;
+                        else frame[slot].dirty = 0;
+                        frame[slot].ref = 1;
+                        frame[slot].count ++;
 
-                        st[0]++; // page faults++
-                        st[2]++; //interrupts++, os write in the page from disk.
+                        st.faults++;
+                        st.interrupts++;
 
                 }
         }

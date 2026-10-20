@@ -3,6 +3,7 @@
 //#include <stdlib.h>
 #include "refgen.h"
 #include "policy.h"
+#include "sim.h"
 
 #ifdef DEBUG
 static void selftest(void)
@@ -17,16 +18,18 @@ static void selftest(void)
 		refs[i].is_write = 0; 
 	}
 
-    	fifoState fs = {0};
+    	FifoState fs = {0};
    	Policy fifo = { "FIFO", NULL, fifoVictim, &fs };
     	Stats s = simulate(3, n, refs, &fifo);
-   	 printf("[selftest] FIFO faults=%ld (expect 15)\n", s.faults);
+   	printf("[selftest] FIFO faults=%ld (expect 15)\n", s.faults);
 }
 #endif
 
 
 int main(int argc, char *argv[])
 {
+	selftest();
+	
 	//if (strcmp(argv[1], "random") == 0)
 	//{}
 	// long n = 150000;
