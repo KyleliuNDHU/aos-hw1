@@ -70,9 +70,10 @@ void escHit     (Frame *frame, int idx, void *state)
 {
 	frame[idx].ref = 1;
 }
+
 void mfuHit     (Frame *frame, int idx, void *state)
 {
-	MFUState *mfu_state = (MFUState*) state;
+	// MFUState *mfu_state = (MFUState*) state;
 
 	frame[idx].count++;
 	if(frame[idx].count > frame[mfu_state->max_count].count)

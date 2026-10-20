@@ -19,21 +19,24 @@ static void selftest(void)
 	}
 
 	// FIFO
+	printf("FIFO:\n");
     	FifoState fs = {0};
    	Policy fifo = { "FIFO", NULL, fifoVictim, &fs };
     	Stats fifo_stats = simulate(3, n, refs, &fifo);
-   	printf("[selftest] %s faults=%ld (expect 15)\n",fifo.name, fifo_stats.faults);
+   	printf("[selftest] %s faults=%ld (expect 15)\n\n",fifo.name, fifo_stats.faults);
 
 	// ESC
+	printf("ESC:\n");
 	ESCState esc_s = {0};
         Policy esc = { "ESC", escHit, escVictim, &esc_s };
         Stats esc_stats = simulate(3, n, refs, &esc);
-        printf("[selftest] %s faults=%ld (expect 15)\n", esc.name, esc_stats.faults);
+        printf("[selftest] %s faults=%ld (expect 12)\n\n", esc.name, esc_stats.faults);
 	
 	// MFU
+	printf("MFU:\n");
 	Policy mfu = { "MFU", mfuHit, mfuVictim, NULL};
 	Stats mfu_stats = simulate(3, n, refs, NULL);
-	print("[selftest] %s faults=%ld (expect 14)\n", mfu.name, mfu_stats.faults);
+	printf("[selftest] %s faults=%ld (expect 14)\n", mfu.name, mfu_stats.faults);
 
 }
 #endif
