@@ -5,6 +5,7 @@ typedef struct {
 	int page;  // 0 means empty frame;
 	int dirty; // 1 if modified; 0 otherwise
 	int ref;   // used for ESC
+	long loaded_at;
 	long count; // used for MFU
 } Frame;
 
@@ -27,15 +28,15 @@ int fifoVictim	(Frame *frame, int nframes, void *state);
 int escVictim	(Frame *frame, int nframes, void *state);
 int mfuVictim	(Frame *frame, int nframes, void *state);
 
-void escHit	(Frame *frame, int idx, void *state);
-void mfuHit	(Frame *frame, int idx, void *state);
+void escHit	(Frame *frame, int idx);
+void mfuHit	(Frame *frame, int idx);
 
 typedef struct {
 	const char *name; // "FIFO", "MFU", "ESC",used to table
 	
 	// called when hit, can be NULL at FIFO
 	// idx is the index of the frame which the hit page at.
-	void (*on_hit)(Frame *frames, int idx, void *state);
+	void (*on_hit)(Frame *frames, int idx);
 	
 	victimFn victim; // called when miss occur with no empty frame.	
 	void *state; // point to FifoState / ESCState / MFUState

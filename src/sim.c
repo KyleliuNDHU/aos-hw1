@@ -16,6 +16,7 @@
  * 7. all specific behavior of algorithm are done by the function of POLICY,
  *    simulate(sim)itself don't know which algorithm is running now.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "sim.h"
@@ -44,7 +45,15 @@ static int findEmpty(const Frame *frame, int nframes)
 }
 
 Stats simulate (int nframes, long n, Ref *refs, Policy *policy)
-{
+/**    <<__ASSUMPTION__>>
+ * 1. dirty bit set 1 when ref is a write access(is_write == 1)
+ * 2. ref set at hit and write in from disk; clear at escVictim (if have 2nd Round scan)
+ * 3. frames initial empty: all value clear to 0.
+ * 4. I don't know how to write the rule of 填滿算 fault
+ * 5. is_write is set by the probability of pwrite.
+ */
+{	
+	long clock=0;
         Stats st = {0, 0, 0};
         Frame *frame = calloc(nframes, sizeof(Frame));
 
@@ -57,6 +66,8 @@ Stats simulate (int nframes, long n, Ref *refs, Policy *policy)
         long i;
         for(i=0; i < n; i++)
         {
+		clock++;
+		
                 int idx = findPage(frame, nframes, refs[i].page);
                 if(idx >= 0)    // Hit
                 {
@@ -82,7 +93,7 @@ Stats simulate (int nframes, long n, Ref *refs, Policy *policy)
                         else frame[slot].dirty = 0;
                         frame[slot].ref = 1;
                         frame[slot].count = 1;
-
+			frame[slot].loaded_at=clock;
                         st.faults++;
                         st.interrupts++;
 

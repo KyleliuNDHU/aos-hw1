@@ -1,11 +1,16 @@
-//#include <string.h>
+#include <string.h>
 #include <stdio.h>
 //#include <stdlib.h>
 #include "refgen.h"
 #include "policy.h"
 #include "sim.h"
 
-#ifdef DEBUG
+static void usage(const char *prog)
+{
+	fprintf(stderr, "Usage: %s --selftest\n", prog);
+	fprintf(stderr, "	%s --gen random|locality|mine --frames N --seed S\n", prog);
+}
+
 static void selftest(void)
 {
     	int seq[] = {7,0,1,2,0,3,0,4,2,3,0,3,2,1,2,0,1,7,0,1};
@@ -35,27 +40,19 @@ static void selftest(void)
 	// MFU
 	printf("MFU:\n");
 	Policy mfu = { "MFU", mfuHit, mfuVictim, NULL};
-	Stats mfu_stats = simulate(3, n, refs, NULL);
+	Stats mfu_stats = simulate(3, n, refs, &mfu);
 	printf("[selftest] %s faults=%ld (expect 14)\n", mfu.name, mfu_stats.faults);
 
 }
-#endif
 
 
 int main(int argc, char *argv[])
 {
-	selftest();
-	
-	//if (strcmp(argv[1], "random") == 0)
-	//{}
-	// long n = 150000;
-	// Ref *ref_p = malloc(n * sizeof(Ref));
-	//if (ref_p == NULL) {exit(1);}
-	//genRandom(ref_p, n, 1500, 0.3, 1);
-
-	//int j;
-	//for(j=0; j<30; j++)
-	//	printf("out[%d]:{page: %d, is_write: %d}\n", j, ref_p[j].page, ref_p[j].is_write);
-
-	return 0;
+	if (argc >= 2 && strcmp(argv[1], "--selftest") == 0) 
+	{
+		selftest();	
+		return 0;
+	}
+	usage(argv[0]);
+	return 1;
 }
