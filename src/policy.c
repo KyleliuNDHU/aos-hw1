@@ -78,20 +78,19 @@ int escVictim(Frame *frame, int nframes, void *state)
             	}
                 p = (p+1) % nframes;
        	}
+
+	return esc_state->hand; // (trash code) this line never run, just for following the request of C language.
 }
 
 int mfuVictim(Frame *frame, int nframes, void *state)
 {
 	int victim = 0;
 	
-	long max_idx = 0;
-	
 	int i;
 	for(i=0; i<nframes; i++)
 	{
-		if(frame[i].count > frame[max_idx].count || (frame[i].count == frame[victim].count && frame[i].loaded_at < frame[victim].loaded_at))
-			victim = i;
-		
+		if(frame[i].count > frame[victim].count || (frame[i].count == frame[victim].count && frame[i].loaded_at < frame[victim].loaded_at))
+			victim = i;		
 	}
 	
 	return victim;

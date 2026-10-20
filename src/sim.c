@@ -10,7 +10,7 @@
  * 5. Miss, and no empty frame: Ask POLICY for a victim.
  *         If the dirty bit of victim is 1 will need to do aditional operations -- disk_write++, interrupts++,
  *         otherwise, just put the new page into the frame where is used to be the victim,
- *         (dirty = is_write, ref_bit=0, count=0), faults++, interrupts++,
+ *         (dirty = is_write, ref_bit=1, count=1), faults++, interrupts++,
  *         and last thing: notify POLICY about the new loaded page.
  * 6. Return three variables of Stats.
  * 7. all specific behavior of algorithm are done by the function of POLICY,
@@ -49,7 +49,7 @@ Stats simulate (int nframes, long n, Ref *refs, Policy *policy)
  * 1. dirty bit set 1 when ref is a write access(is_write == 1)
  * 2. ref set at hit and write in from disk; clear at escVictim (if have 2nd Round scan)
  * 3. frames initial empty: all value clear to 0.
- * 4. I don't know how to write the rule of 填滿算 fault
+ * 4. cold-start misses count as page faults: frames start empty, and filling an empty frame is a fault with no victim.
  * 5. is_write is set by the probability of pwrite.
  */
 {	

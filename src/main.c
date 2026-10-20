@@ -35,13 +35,13 @@ static void selftest(void)
 	ESCState esc_s = {0};
         Policy esc = { "ESC", escHit, escVictim, &esc_s };
         Stats esc_stats = simulate(3, n, refs, &esc);
-        printf("[selftest] %s faults=%ld (expect 12)\n\n", esc.name, esc_stats.faults);
+        printf("[selftest] %s faults=%ld (expect 14)\n\n", esc.name, esc_stats.faults);
 	
 	// MFU
 	printf("MFU:\n");
 	Policy mfu = { "MFU", mfuHit, mfuVictim, NULL};
 	Stats mfu_stats = simulate(3, n, refs, &mfu);
-	printf("[selftest] %s faults=%ld (expect 14)\n", mfu.name, mfu_stats.faults);
+	printf("[selftest] %s faults=%ld (expect 15)\n", mfu.name, mfu_stats.faults);
 
 }
 
