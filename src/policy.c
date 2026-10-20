@@ -18,7 +18,7 @@ int escVictim(Frame *frame, int nframes, void *state)
 	// means the frame that is pointed by hand initially is the first frame need to check.
 	
 	int p = esc_state -> hand; 	// used in the loop below 
-	int victim = search_p;			// the victim candidate
+	int victim = p;			// the victim candidate
 
 	int i;
 	for(i=0; i<nframes; i++)
@@ -36,9 +36,8 @@ int escVictim(Frame *frame, int nframes, void *state)
 		else if((frame[victim].dirty > frame[p].dirty) && (frame[victim].ref == frame[p].ref))
 		// (1,1) -> (1,0)
 		{
-			victim = p
+			victim = p;
 		}
-		else continue; // victim: (ref, dirty) = (0, 1) 
 		
 		p = (p+1) % nframes;
 	}
@@ -50,34 +49,32 @@ int escVictim(Frame *frame, int nframes, void *state)
 
 int mfuVictim(Frame *frame, int nframes, void *state)
 {
-	MFUState *mfu_state = (MFUState*) state;
+	int victim;
 	
-	int victim = mfu_state -> max_count;
+	int max_count = -1;
 	
-	int search = (mfu_state->max_count + 1) % nframes;
-	int sec_max_num = frame[search].count;
-
-	while(search != victim)
+	int i;
+	for(i=0; i<nframes; i++)
 	{
-		if(frame[search].count > sec_max_num)
+		if(frame[i].count > max_count)
 		{
-			sec_max_num = frame[search].count;
-			mfu_state -> max_count = search;
+			max_count = frame[i].count;
+			victim = i;
 		}
-		search = (search+1)%nframes;
+		
 	}
 	
 	return victim;
 }
-void escHit     (Frame *frame, int idx, void *stats)
+void escHit     (Frame *frame, int idx, void *state)
 {
 	frame[idx].ref = 1;
 }
-void mfuHit     (Frame *frame, int idx, void *stats)
+void mfuHit     (Frame *frame, int idx, void *state)
 {
 	MFUState *mfu_state = (MFUState*) state;
 
 	frame[idx].count++;
-	if(frame[idx].count > frame[mfu_state->max_count])
+	if(frame[idx].count > frame[mfu_state->max_count].count)
 		mfu_state->max_count = idx;
 }

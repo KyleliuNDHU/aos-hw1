@@ -81,7 +81,7 @@ Stats simulate (int nframes, long n, Ref *refs, Policy *policy)
                         if(refs[i].is_write) frame[slot].dirty = 1;
                         else frame[slot].dirty = 0;
                         frame[slot].ref = 1;
-                        frame[slot].count ++;
+                        frame[slot].count = 1;
 
                         st.faults++;
                         st.interrupts++;

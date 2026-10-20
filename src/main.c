@@ -18,10 +18,23 @@ static void selftest(void)
 		refs[i].is_write = 0; 
 	}
 
+	// FIFO
     	FifoState fs = {0};
    	Policy fifo = { "FIFO", NULL, fifoVictim, &fs };
-    	Stats s = simulate(3, n, refs, &fifo);
-   	printf("[selftest] FIFO faults=%ld (expect 15)\n", s.faults);
+    	Stats fifo_stats = simulate(3, n, refs, &fifo);
+   	printf("[selftest] %s faults=%ld (expect 15)\n",fifo.name, fifo_stats.faults);
+
+	// ESC
+	ESCState esc_s = {0};
+        Policy esc = { "ESC", escHit, escVictim, &esc_s };
+        Stats esc_stats = simulate(3, n, refs, &esc);
+        printf("[selftest] %s faults=%ld (expect 15)\n", esc.name, esc_stats.faults);
+	
+	// MFU
+	Policy mfu = { "MFU", mfuHit, mfuVictim, NULL};
+	Stats mfu_stats = simulate(3, n, refs, NULL);
+	print("[selftest] %s faults=%ld (expect 14)\n", mfu.name, mfu_stats.faults);
+
 }
 #endif
 

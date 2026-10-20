@@ -21,14 +21,14 @@ typedef int (*victimFn)(Frame *frame, int nframes, void *state);
 
 typedef struct {int next_victim;} FifoState;
 typedef struct {int hand;} ESCState;
-typedef struct {int max_count;}MFUState;
+// typedef struct {int max_count;}MFUState;
 
 int fifoVictim	(Frame *frame, int nframes, void *state);
 int escVictim	(Frame *frame, int nframes, void *state);
 int mfuVictim	(Frame *frame, int nframes, void *state);
 
-void escHit	(Frame *frame, int idx, void *stats);
-void mfuHit	(Frame *frame, int idx, void *stats);
+void escHit	(Frame *frame, int idx, void *state);
+void mfuHit	(Frame *frame, int idx, void *state);
 
 typedef struct {
 	const char *name; // "FIFO", "MFU", "ESC",used to table
