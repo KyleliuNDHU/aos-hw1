@@ -8,10 +8,6 @@ void genRandom(Ref *out, long n, int npages, double pwrite, unsigned seed)
 	long i;
 	for(i=0; i<n; i++)
 	{
-		// TEST:START
-		if(n == 30) break;
-		// TEST:END
-
 		// rand() % npages : 0 to (npages-1),
 		// but the range of ref. start from 1,
 		// so add 1 to let it be 1 to napges.
@@ -52,7 +48,7 @@ void genLocality(Ref *out, long n, int npages, double pwrite, unsigned seed)
 		 * rand() % (CALL_LEN_MAX - CALL_LEN_MIN + 1): choose a offset here
 		 * final formula: base + offset = the random reference length of the procedure call
 		 */
-		int ref_len = CALL_LEN_MIN + rand() % (CALL_LEN_MAX - CALL_LEN_MAX + 1);
+		int ref_len = CALL_LEN_MIN + rand() % (CALL_LEN_MAX - CALL_LEN_MIN + 1);
 
 		// simillar reasons above.
 		int wind_width = WIND_MIN + rand() % (WIND_MAX - WIND_MIN + 1);
