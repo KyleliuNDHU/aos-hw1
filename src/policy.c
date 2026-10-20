@@ -70,10 +70,10 @@ int escVictim(Frame *frame, int nframes, void *state)
         p = esc_state -> hand;
         for(i=0; i<nframes; i++)
         {
-        	if(!frame[p].ref && frame[p].dirty) // (1, >
+        	if(!frame[p].ref && frame[p].dirty)
                 {
           		victim = p;
-             		esc_state->hand = (victim+1)%nfram>
+             		esc_state->hand = (victim+1)%nframes;
              		return victim;
             	}
                 p = (p+1) % nframes;

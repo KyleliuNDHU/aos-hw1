@@ -73,7 +73,7 @@ Stats simulate (int nframes, long n, Ref *refs, Policy *policy)
                 {
                         if(refs[i].is_write)frame[idx].dirty = 1;
                         if(policy->on_hit != NULL)
-                                policy->on_hit(frame, idx, policy->state);
+                                policy->on_hit(frame, idx);
                 }
                 else // Miss
                 {
