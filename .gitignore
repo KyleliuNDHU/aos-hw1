@@ -1,5 +1,5 @@
 *.o
 *.exe
-results/*.csv
 figures/*.png
+results/*.csv
 __pycache__/
