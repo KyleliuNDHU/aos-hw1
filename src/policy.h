@@ -27,6 +27,9 @@ int fifoVictim	(Frame *frame, int nframes, void *state);
 int escVictim	(Frame *frame, int nframes, void *state);
 int mfuVictim	(Frame *frame, int nframes, void *state);
 
+void escHit	(Frame *frame, int idx, void *stats);
+void mfuHit	(Frame *frame, int idx, void *stats);
+
 typedef struct {
 	const char *name; // "FIFO", "MFU", "ESC",used to table
 	
