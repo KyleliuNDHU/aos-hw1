@@ -4,6 +4,35 @@
 #include "refgen.h"
 #include "policy.h"
 #include "sim.h"
+#include "options.h"
+
+static int parseArgs(int argc, char *argv[], Options *opts)
+{
+	int i;
+	for(i=0; i<argc; i++)
+	{
+		switch(argcv[i])
+		{
+			case "--selftest":
+				opts->selftest = 1;
+				break;
+			case "--gen":
+				if(strcmp())
+			case "--nrefs":
+			case "--frames":
+			case "--pwrite":
+			case "--seed":
+			case "--out":
+				
+			case "--help":
+				break;
+			default:
+				fprintf(stderr, "command error: can't recognize this %s", argv[i]);
+				return -1;
+		}
+	}
+	return 0;
+}
 
 static void usage(const char *prog)
 {
