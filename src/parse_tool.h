@@ -1,10 +1,11 @@
 #ifndef PARSE_TOOL_H
 #define PARSE_TOOL_H
 
-int parse_int(const char *s, int *out);
-int parse_long(const char *s, long *out);
-int parse_double(const char *s, double *out);
+int parseInt(const char *s, int *out);
+int parseLong(const char *s, long *out);
+int parseDouble(const char *s, double *out);
 
-int illegalGen(char *gen_name[])
-bool illegalOut(char *out_name[])
+int parseGen(const char *s, char *out);
+int parseOut(const char *s, char *out);
+
 #endif
