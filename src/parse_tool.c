@@ -104,13 +104,16 @@ int parseGen(const char *s, char *out)
 }
 
 int parseOut(const char *s, char *out)
-{
+{	
+	/*
         if(strcmp(s, "stdout"))
 	{
 		fprintf(stderr, "argument error (out): can't recognize this %s", s);
 		return 0;
 	}
+	*/
 	
+	if (s == NULL){fprintf(stderr, "parseOut Error: no file to write in"); return 0;}
 	out = s;
 	return 1;
 }

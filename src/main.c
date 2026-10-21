@@ -53,6 +53,66 @@ static void usage(const char *prog)
 	fprintf(stderr, "	%s --gen random|locality|mine --npages N --frames N --pwrite P(0<=P<=1) --seed S --out stdout(default)\n", prog);
 }
 
+typedef void (*GenFn) (Ref*, long, int, double, unsigned)
+
+static GenFn pickGen(const char *name)
+{
+	if(strcmp(name, "random") == 0)		return genRandom;
+	if(strcmp(name, "locality") == 0)	return genLocality;
+	if(strcmp(name, "mine") == 0)		return genMine;
+	return NULL;
+}
+
+static int runExperiment(Options *opts)
+{	
+	GenFn gen = pickGen(opts->gen);
+	if(gen == NULL){fprintf(stderr, "unkown generator: %s\n", opts->gen); return 1;}
+	
+	Ref *refs = malloc(opts->nrefs * sizeof *refs);
+	if(refs == NULL)
+	{
+		fprintf(stderr, "malloc failed\n");
+		return 1;
+	}
+	
+	File *out = stdout;
+	if(opts->out != NULL)
+		out = fopen(opts->out, 'w');
+
+	if(out == NULL)
+	{
+		perror(opts->out);
+		free(refs); 
+		refs = NULL;
+		return 1;
+	}
+	
+	fprintf(out, "gen,algo,frames,faults,interrupts,disk_writes\n");
+	
+	int min_frames = opts->frames ? opts->frames : 10;
+	int max_frames = opts->frames ? opts->frames : 100;
+	
+	int nfs; // number of frames
+	for(nfs = min_frames; nfs <= max_frames; k+=10)
+	{
+		FifoState *fifo_st = {0};
+		ESCState *esc_st = {0};
+		
+		Policy policys[] = {{"FIFO", NULL, fifoVictim, fifo_st}, {"ESC", escHit, escVictim, esc_st}, {"MFU", mfuHit, mfuVictim, NULL}};
+		
+		int npolicys = sizeof policys / sizeof policys[0];
+		for(int k=0; k<npolicys; k++)
+		{
+			Stats ss = simulate (nfs, opts->nrefs, Rrefs, policys[k]);
+			fprintf(out, "%s,%s,%d,%ld,%ld,%ld",opts->gen, policys[k].name, opts->frames, ss.faults, ss.interrupts, ss.disk_writes);
+		}
+	}
+
+	if(out != stdout) fclose(out);
+	free(refs);
+	refs = NULL;
+	return 0;
+}
 static void selftest(const Options *opts, const Ref *refs)
 {
 	

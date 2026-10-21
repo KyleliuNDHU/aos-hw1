@@ -9,5 +9,5 @@ void optionsInit(Options *opts)
 	opts -> frames = 0;	
 	opts -> pwrite = 0.3;
 	opts -> seed = 1;
-	opts -> out = "stdout";
+	opts -> out = NULL;
 }
