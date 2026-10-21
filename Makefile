@@ -10,6 +10,15 @@ all: $(TARGET)
 debug: CFLAGS += -O0 -DDEBUG
 debug: clean $(TARGET)
 
+run: $(TARGET)
+	mkdir -p results
+	./$(TARGET) --gen random --out results/random.csv
+	./$(TARGET) --gen locality --out results/locality.csv
+	./$(TARGET) --gen mine --out results/mine.csv
+
+plot:
+	python scripts/plot.py results/random.csv results/locality.csv results/mine.csv
+
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
@@ -19,5 +28,5 @@ src/%.o: src/%.c src/*.h
 clean:
 	rm -f $(OBJ) $(TARGET)
 
-.PHONY: all debug clean
+.PHONY: all debug clean run plot
 
