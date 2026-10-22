@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <errno.h>
-//#include <limits.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include "parse_tool.h"
@@ -56,9 +56,9 @@ int parseInt(const char *s, int *out) {
     }
 
     // 3. 檢查範圍
-    if (val > 1500 || val < 1) {
+    if (val > INT_MAX || val < INT_MIN) {
 	fprintf(stderr, "parseInt error: 3. Out of range\n");
-        return 0; // 超出 int 範圍
+      	return 0; // 超出 int 範圍
     }
 
     *out = (int)val;
@@ -96,7 +96,7 @@ int parseGen(const char *s, char **out)
 {
 	if(strcmp(s, "random") && strcmp(s, "locality") && strcmp(s, "mine"))
 	{
-		fprintf(stderr, "argument error (gen): can't recognize this %s", s);
+		fprintf(stderr, "argument error (gen): can't recognize this %s\n", s);
 		return 0;
 	}
         *out = s;
@@ -113,7 +113,7 @@ int parseOut(const char *s, char **out)
 	}
 	*/
 	
-	if (s == NULL){fprintf(stderr, "parseOut Error: no file to write in"); return 0;}
+	if (s == NULL){fprintf(stderr, "parseOut Error: no file to write in\n"); return 0;}
 	*out = s;
 	return 1;
 }

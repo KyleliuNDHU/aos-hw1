@@ -69,3 +69,8 @@ void genLocality(Ref *out, long n, int npages, double pwrite, unsigned seed)
 		}
 	}
 }
+
+void genMine(Ref *out, long n, int npages, double pwrite, unsigned seed)
+{
+	genRandom(out, n, npages, pwrite, seed); /*TODO: placeholder */
+}

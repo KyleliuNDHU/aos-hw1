@@ -7,6 +7,7 @@
 #include "options.h"
 #include "parse_tool.h"
 
+static void usage(const char *prog);
 static int nextIsNull(){ fprintf(stderr, "%s needs a value\n", argv[i]); return -1; }
 static int parseArgs(int argc, char *argv[], Options *opts)
 {
@@ -47,10 +48,11 @@ static int parseArgs(int argc, char *argv[], Options *opts)
                          if(!parseOut(argv[++i], &opts->out)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--help") == 0){
-			return -1;
+			usage("pagesim.exe")
+			return 0;
 		}
    		else{
-			fprintf(stderr, "command error: can't recognize this %s", argv[i]);
+			fprintf(stderr, "command error: can't recognize this %s\n", argv[i]);
 			return -1;
 		}
 	}
@@ -76,7 +78,7 @@ static GenFn pickGen(const char *name)
 static int runExperiment(Options *opts)
 {	
 	GenFn gen = pickGen(opts->gen);
-	if(gen == NULL){fprintf(stderr, "unkown generator: %s\n", opts->gen); return 1;}
+	if(gen == NULL){fprintf(stderr, "unknown generator: %s\n", opts->gen); return 1;}
 	
 	Ref *refs = malloc(opts->nrefs * sizeof *refs);
 	if(refs == NULL)
@@ -141,7 +143,7 @@ static void selftest(void)
     	FifoState fs = {0};
    	Policy fifo = { "FIFO", NULL, fifoVictim, &fs };
     	Stats fifo_stats = simulate(3, n, refs, &fifo);
-   	printf("[selftest] %-4s faults=%ld expect=%ld\n\n", fifo.name, fifo_stats.faults, 15);
+   	printf("[selftest] %-4s faults=%ld expect=%d\n\n", fifo.name, fifo_stats.faults, 15);
 	//printf("[selftest] %-4s, faults=%ld, disk_writes=%ld, interrupts=%ld\n\n",fifo.name, fifo_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts);
 
 	// ESC
@@ -149,13 +151,13 @@ static void selftest(void)
 	ESCState esc_s = {0};
         Policy esc = { "ESC", escHit, escVictim, &esc_s };
         Stats esc_stats = simulate(3, n, refs, &esc);
-	printf("[selftest] %-4s faults=%ld expect=%ld\n\n",esc.name, esc_stats.faults, 15);
+	printf("[selftest] %-4s faults=%ld expect=%d\n\n",esc.name, esc_stats.faults, 15);
 
 	// MFU
 	printf("MFU:\n");
 	Policy mfu = { "MFU", mfuHit, mfuVictim, NULL};
 	Stats mfu_stats = simulate(3, n, refs, &mfu);
-	printf("[selftest] %-4s faults=%ld expect=%ld\n\n",mfu.name, mfu_stats.faults, 15);
+	printf("[selftest] %-4s faults=%ld expect=%d\n\n",mfu.name, mfu_stats.faults, 15);
 
 }
 
