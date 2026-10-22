@@ -7,7 +7,7 @@ Each CSV must have the header
     gen,algo,frames,faults,interrupts,disk_writes
 (exactly what pagesim.exe --out writes). For every reference string (gen)
 and every metric this script writes one PNG to figures/<gen>_<metric>.png,
-with one line per algorithm. Three CSV files -> nine figures.
+with one line per algorithm. Three CSV files x four metrics -> twelve figures.
 """
 
 import csv                      # standard library: read comma-separated files
@@ -46,7 +46,7 @@ def load(paths):
     return data
 
 def value(row, key):
-	"""Retrun metric 'key' of one CSV row as int. 'cost' is derived:
+	"""Return metric 'key' of one CSV row as int. 'cost' is derived:
 	interrupts + disk_writes, the cost definition in the assignment."""
 	if key == "cost":
 		return int(row["interrupts"]) + int(row["disk_writes"])

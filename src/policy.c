@@ -23,13 +23,13 @@ int fifoVictim(Frame *frame, int nframes, void *state)
 int escVictim(Frame *frame, int nframes, void *state)
 {
 	ESCState *esc_state = (ESCState*) state;
-	// Suppose the hand of ESCState point to the start frame, 
-	// means the frame that is pointed by hand initially is the first frame need to check.
+	// esc_state->hand = the first frame to inspect (one past the last victim).
 
-	int p = esc_state -> hand; 	// used in the loop below 
+	int p = esc_state->hand;	// current position of the scan
 	int victim = p;			// the victim candidate
-
 	int i;
+
+	/* pass 1: first (0,0); nothing is modified */
 	for(i=0; i<nframes; i++)
 	{
 		if(frame[p].ref == 0 && frame[p].dirty == 0)
@@ -41,41 +41,45 @@ int escVictim(Frame *frame, int nframes, void *state)
 		p = (p+1) % nframes;
 	}
 
-	p = esc_state -> hand;
+	/* pass 2: first (0,1); every frame passed gets ref cleared, (1,x) -> (0,x) */
+	p = esc_state->hand;
 	for(i=0; i<nframes; i++)
 	{
-		if(!frame[p].ref && frame[p].dirty) // (1, X) -> (0, X) 
+		if(!frame[p].ref && frame[p].dirty)
 		{
-			 victim = p;
-                         esc_state->hand = (victim+1)%nframes;
-                         return victim;
+			victim = p;
+			esc_state->hand = (victim+1)%nframes;
+			return victim;
 		}
 		frame[p].ref = 0;
 		p = (p+1) % nframes;
 	}
 
-	p = esc_state -> hand;
+	/* pass 3: first (0,0); all ref bits are 0 now, so this finds any clean page */
+	p = esc_state->hand;
 	for(i=0; i<nframes; i++)
 	{
 		if(frame[p].ref == 0 && frame[p].dirty == 0)
-              	{
-                        victim = p;
-                        esc_state->hand = (victim+1)%nframes;
-                	return victim;
-              	}
-                p = (p+1) % nframes;
+		{
+			victim = p;
+			esc_state->hand = (victim+1)%nframes;
+			return victim;
+		}
+		p = (p+1) % nframes;
 	}
-        p = esc_state -> hand;
-        for(i=0; i<nframes; i++)
-        {
-        	if(!frame[p].ref && frame[p].dirty)
-                {
-          		victim = p;
-             		esc_state->hand = (victim+1)%nframes;
-             		return victim;
-            	}
-                p = (p+1) % nframes;
-       	}
+
+	/* pass 4: first (0,1); every page is (0,1) at this point, so this always hits */
+	p = esc_state->hand;
+	for(i=0; i<nframes; i++)
+	{
+		if(!frame[p].ref && frame[p].dirty)
+		{
+			victim = p;
+			esc_state->hand = (victim+1)%nframes;
+			return victim;
+		}
+		p = (p+1) % nframes;
+	}
 
 	return esc_state->hand; /* unreachable: pass 4 always succeeds; satisfies the compiler */
 }
@@ -120,6 +124,12 @@ void mfuHit     (Frame *frame, int idx)
  *   5. ESC (0,0)          6. ESC (0,1)
  * Step 4's demotion is the aging mechanism: a page that was hot long ago but
  * has not been touched during one full hand sweep loses its protection. */
+/* One sweep of the clock hand over all n frames starting at `hand`.
+ *   wantOnce  = 1: look for count <= 1 (used only once) with dirty == wantDirty
+ *   wantOnce  = 0: plain ESC class (ref == 0, dirty == wantDirty)
+ *   demote    = 1: while sweeping, clear ref of every (1,x) page AND set its
+ *                  count back to 1 (aging). Only used in step 4.
+ * Returns the frame index found, or -1 if no frame matches. */
 static int srScan(Frame *f, int n, int hand, int wantOnce, int wantDirty, int demote)
 {
 	int p = hand;
@@ -139,6 +149,8 @@ int srVictim(Frame *frame, int nframes, void *state)
 {
 	SRState *st = (SRState *)state;
 	int v;
+	/* Try the six steps in order; each `if` only runs when the previous
+	 * srScan returned -1. Arguments: (wantOnce, wantDirty, demote). */
 	if ((v = srScan(frame, nframes, st->hand, 1, 0, 0)) < 0)
 	if ((v = srScan(frame, nframes, st->hand, 1, 1, 0)) < 0)
 	if ((v = srScan(frame, nframes, st->hand, 0, 0, 0)) < 0)
@@ -150,7 +162,8 @@ int srVictim(Frame *frame, int nframes, void *state)
 	return v;
 }
 
-/* SR-ESC on hit: set the reference bit and count the re-reference. */
+/* SR-ESC on hit: set the reference bit and count the re-reference.
+ * count >= 2 is what protects a page from steps 1-2 of srVictim. */
 void srHit(Frame *frame, int idx)
 {
 	frame[idx].ref = 1;

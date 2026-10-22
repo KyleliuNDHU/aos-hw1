@@ -1,7 +1,8 @@
 #include <stddef.h>
 #include "options.h"
 
-Options defaultOptions()
+/* Defaults = the assignment's minimum (150,000 refs, pages 1..1500). */
+Options defaultOptions(void)
 {
 	return (Options){
 		.selftest = 0,

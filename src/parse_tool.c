@@ -10,24 +10,24 @@ int parseLong(const char *s, long *out)
 	char *end;
 	errno = 0;
 
-	long val = strtol(s, &end, 10);
+	long val = strtol(s, &end, 10);	// base 10; `end` points to the first char not consumed
 
-	// 1. 
+	// 1. no digits at all (e.g. "" or "abc")
 	if (end == s) 
 	{
 		fprintf(stderr, "parseLong error: 1. No digits\n");
 		return 0;
 	}
 	
-	// 2.
+	// 2. trailing garbage (e.g. "12x")
 	if(*end != '\0')
 	{
 		fprintf(stderr, "parseLong error: 2. Illegal characters\n");
 		return 0;
 	}
 	
-	// 3. 
-	if (errno == ERANGE /* || val < 150000 */)
+	// 3. overflow: strtol sets errno = ERANGE
+	if (errno == ERANGE)
 	{
 		fprintf(stderr, "parseLong error: 3. Out of range\n");
 		return 0;
@@ -82,16 +82,18 @@ int parseDouble(const char *s, double *out) {
         return 0; // 字串後面還有非數字
     }
 
-    // 3. 檢查範圍
+    // 3. 檢查範圍：pwrite 是機率，只接受 0.0 ~ 1.0
     if (val < 0.0 || val > 1.0) {
-	fprintf(stderr, "parseDouble error: 3. Out of range\n");
-        return 0; // 超出 double 範圍
+	fprintf(stderr, "parseDouble error: 3. Out of range (need 0 <= P <= 1)\n");
+        return 0; // 不在 [0, 1]
     }
 
     *out = val;
     return 1; // 成功
 }
 
+/* --gen only accepts the three generator names; the string itself is kept
+ * (points into argv, which lives for the whole program). */
 int parseGen(const char *s, const char **out)
 {
 	if(strcmp(s, "random") && strcmp(s, "locality") && strcmp(s, "mine"))
@@ -103,16 +105,9 @@ int parseGen(const char *s, const char **out)
 	return 1;
 }
 
+/* --out takes any path; the file is opened later in runExperiment. */
 int parseOut(const char *s, const char **out)
-{	
-	/*
-        if(strcmp(s, "stdout"))
-	{
-		fprintf(stderr, "argument error (out): can't recognize this %s", s);
-		return 0;
-	}
-	*/
-	
+{
 	if (s == NULL){fprintf(stderr, "parseOut Error: no file to write in\n"); return 0;}
 	*out = s;
 	return 1;

@@ -12,7 +12,7 @@ void genRandom(Ref *out, long n, int npages, double pwrite, unsigned seed)
 	{
 		// rand() % npages : 0 to (npages-1),
 		// but the range of ref. start from 1,
-		// so add 1 to let it be 1 to napges.
+		// so add 1 to let it be 1 to npages.
 		out[i].page = 1 + rand() % npages;
 
 		/**
@@ -30,14 +30,16 @@ void genRandom(Ref *out, long n, int npages, double pwrite, unsigned seed)
 
 void genLocality(Ref *out, long n, int npages, double pwrite, unsigned seed)
 {
-	// Test constants : Suppose n = 1500000
-	// CALL_LEN: the reference string length of procedure call.
+	// Tunable constants (chosen for n = 150000, npages = 1500).
+	// CALL_LEN: how many references one procedure call makes before it returns.
 	const int CALL_LEN_MIN = 750;
 	const int CALL_LEN_MAX = 1500;
-	// WIND: the range of reference strings, the procedure call access.
+	// WIND: how many consecutive pages one procedure call touches (its working set).
+	// 20~50 straddles the tested frame counts 10..100, so the figures show both
+	// "working set fits" and "does not fit".
 	const int WIND_MIN = 20;
 	const int WIND_MAX = 50;
-	// Test constants : ends
+	// Tunable constants : end
 
 	srand(seed);
 
@@ -52,7 +54,7 @@ void genLocality(Ref *out, long n, int npages, double pwrite, unsigned seed)
 		 */
 		int ref_len = CALL_LEN_MIN + rand() % (CALL_LEN_MAX - CALL_LEN_MIN + 1);
 
-		// simillar reasons above.
+		// same idea as above
 		int wind_width = WIND_MIN + rand() % (WIND_MAX - WIND_MIN + 1);
 		int start = 1 + rand() % (npages - wind_width + 1);// the range of ref. can't beyond the npages
 
@@ -61,7 +63,7 @@ void genLocality(Ref *out, long n, int npages, double pwrite, unsigned seed)
 		{
 			if(filled >= n) break; // if already filled n references means accomplish the requirement.
 			out[filled].page = start + rand() % wind_width;
-			// Suppose the procedure never access the pages out of its windows starts from the int. variable start stored.
+			// a procedure never touches pages outside its own window [start, start+wind_width-1]
 
 
 			double uniform_random_prob = (double) rand()/RAND_MAX;
