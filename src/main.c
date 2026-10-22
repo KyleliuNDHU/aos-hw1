@@ -7,6 +7,7 @@
 #include "options.h"
 #include "parse_tool.h"
 
+static int nextIsNull(){ fprintf(stderr, "%s needs a value\n", argv[i]); return -1; }
 static int parseArgs(int argc, char *argv[], Options *opts)
 {
 	int i;
@@ -16,30 +17,33 @@ static int parseArgs(int argc, char *argv[], Options *opts)
 				opts->selftest = 1;
 		}
 		else if(strcmp(argv[i] ,"--gen") == 0){
-			if(i+1 < argc)return -1;
+			if(i+1 >= argc){ fprintf(stderr, "%s needs a value\n", argv[i]); return -1;}
 			if(!parseGen(argv[++i], &opts->gen)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--nrefs") == 0){
-			if(i+1 < argc)return -1;
+			if(i+1 >= argc){ fprintf(stderr, "%s needs a value\n", argv[i]); return -1; }
 			if(!parseLong(argv[++i], &opts->nrefs)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--npages") == 0){
-			if(i+1 < argc)return -1;
+			if(i+1 >= argc)return nextIsNull();
 			if(!parseInt(argv[++i], &opts->npages)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--frames") == 0){
-			if(i+1 < argc)return -1;
+			if(i+1 >= argc)return nextIsNull();
                         if(!parseInt(argv[++i], &opts->frames)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--pwrite") == 0){
-			if(i+1 < argc)return -1;
+			if(i+1 >= argc)return nextIsNull();
                         if(!parseDouble(argv[++i], &opts->pwrite)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--seed") == 0){
-			if(i+1 < argc)return -1;
-                        if(!parseInt(argv[++i], &opts->seed)) return -1;
+			if(i+1 >= argc)return nextIsNull();
+			int tmp;
+                        if(!parseInt(argv[++i], &tmp)) return -1;
+			opts->seed = (unsigned) tmp;
 		}
 		else if(strcmp(argv[i] ,"--out") == 0){
+			if(i+1 >= argc) return nextIsNull();
                          if(!parseOut(argv[++i], &opts->out)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--help") == 0){
@@ -119,37 +123,40 @@ static int runExperiment(Options *opts)
 	refs = NULL;
 	return 0;
 }
-static void selftest()
+static void selftest(void)
 {
 	
-    	/*int seq[] = {7,0,1,2,0,3,0,4,2,3,0,3,2,1,2,0,1,7,0,1};
-    	for (long i = 0; i < n; i++) 
+    	int seq[] = {7,0,1,2,0,3,0,4,2,3,0,3,2,1,2,0,1,7,0,1};
+    	long n = sizeof seq / sizeof seq[0];
+	Ref refs[20];
+	for (long i = 0; i < n; i++) 
 	{
 		refs[i].page = seq[i] + 1; 
 		refs[i].is_write = 0; 
 	}
-	*/
-	printf("Reference generate pattern: %s\n", opts->gen);
+	//printf("Reference generate pattern: %s\n", opts->gen);
 
 	// FIFO
 	printf("FIFO:\n");
     	FifoState fs = {0};
    	Policy fifo = { "FIFO", NULL, fifoVictim, &fs };
-    	Stats fifo_stats = simulate(opts->frames, opts->nrefs, refs, &fifo);
-   	printf("[selftest] %s, faults=%ld, disk_writes=%ld, interrupts=%ld\n\n",fifo.name, fifo_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts);
+    	Stats fifo_stats = simulate(3, n, refs, &fifo);
+   	printf("[selftest] %-4s faults=%ld expect=%ld\n\n", fifo.name, fifo_stats.faults, 15);
+	//printf("[selftest] %-4s, faults=%ld, disk_writes=%ld, interrupts=%ld\n\n",fifo.name, fifo_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts);
 
 	// ESC
 	printf("ESC:\n");
 	ESCState esc_s = {0};
         Policy esc = { "ESC", escHit, escVictim, &esc_s };
-        Stats esc_stats = simulate(opts->frames, opts->nrefs, refs, &esc);
-	printf("[selftest] %s, faults=%ld, disk_writes=%ld, interrupts=%ld\n\n",esc.name, esc_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts
+        Stats esc_stats = simulate(3, n, refs, &esc);
+	printf("[selftest] %-4s faults=%ld expect=%ld\n\n",esc.name, esc_stats.faults, 15);
 
 	// MFU
 	printf("MFU:\n");
 	Policy mfu = { "MFU", mfuHit, mfuVictim, NULL};
-	Stats mfu_stats = simulate(opts->frames, opts->nrefs, refs, &mfu);
-	printf("[selftest] %s, faults=%ld, disk_writes=%ld, interrupts=%ld\n\n",mfu.name, mfu_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts
+	Stats mfu_stats = simulate(3, n, refs, &mfu);
+	printf("[selftest] %-4s faults=%ld expect=%ld\n\n",mfu.name, mfu_stats.faults, 15);
+
 }
 
 
@@ -159,13 +166,11 @@ int main(int argc, char *argv[])
 
 	if(parseArgs(argc, argv, &opts) < 0)
 	{
-		usage(argv[0])
+		usage(argv[0]);
 		return 1;
 	}
-	
-	int run_fail = 0;
-	if(opts.selftest){selftest()};
-	else {run_fail = runExperiment(&opts)};
 
-	return run_fail ? 1 : 0;
+	if(opts.selftest){selftest(); return 0;}
+	else {return runExperiment(&opts);}
+
 }

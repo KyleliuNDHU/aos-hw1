@@ -20,7 +20,7 @@ int parseLong(const char *s, long *out)
 	}
 	
 	// 2.
-	if(end != '\0')
+	if(*end != '\0')
 	{
 		fprintf(stderr, "parseLong error: 2. Illegal characters\n");
 		return 0;
