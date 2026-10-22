@@ -110,9 +110,10 @@ static int runExperiment(Options *opts)
 	{
 		FifoState fifo_st = {0};
 		ESCState esc_st = {0};
-		
-		Policy policys[] = {{"FIFO", NULL, fifoVictim, &fifo_st}, {"ESC", escHit, escVictim, &esc_st}, {"MFU", mfuHit, mfuVictim, NULL}};
-		
+		SRState sr_st = {0};
+
+		Policy policys[] = {{"FIFO", NULL, fifoVictim, &fifo_st}, {"ESC", escHit, escVictim, &esc_st}, {"MFU", mfuHit, mfuVictim, NULL}, {"SR-ESC", srHit, srVictim, &sr_st}};
+
 		int npolicys = sizeof policys / sizeof policys[0];
 		for(int k=0; k<npolicys; k++)
 		{

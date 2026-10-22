@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "refgen.h"
 
 void genRandom(Ref *out, long n, int npages, double pwrite, unsigned seed)
@@ -70,7 +72,72 @@ void genLocality(Ref *out, long n, int npages, double pwrite, unsigned seed)
 	}
 }
 
+/* ---- genMine: OLTP (Zipf hot/cold) + periodic read-only sequential scan ----
+ * Models a database buffer pool. Most references follow a Zipf distribution
+ * (a few hot pages take most of the traffic). After every OLTP phase a report
+ * query scans SCAN_LEN consecutive pages once; SCAN_LEN is deliberately larger
+ * than any frame count (100), so the scan evicts the hot pages ("scan
+ * pollution"). The scan region is the upper half of the page range so that it
+ * never overlaps the hottest pages, which keeps the effect easy to interpret. */
+#define ZIPF_S        1.0     /* skew; 0.8~1.0 is what real workloads measure  */
+#define OLTP_LEN_MIN  5000    /* references per OLTP phase (random in range)   */
+#define OLTP_LEN_MAX  15000
+#define SCAN_LEN_MIN  200     /* pages per scan, deliberately > 100 frames     */
+#define SCAN_LEN_MAX  500
+
+/* Fill cdf[0..npages] with the cumulative Zipf(s) distribution over ranks
+ * 1..npages: cdf[k] = P(rank <= k), cdf[0] = 0, cdf[npages] = 1.
+ * h is the normalization constant sum(1/k^s) so the probabilities sum to 1. */
+static void buildZipfCdf(double *cdf, int npages, double s)
+{
+	double h = 0.0;
+	for (int k = 1; k <= npages; k++) h += 1.0 / pow(k, s);
+	cdf[0] = 0.0;
+	for (int k = 1; k <= npages; k++) cdf[k] = cdf[k-1] + (1.0 / pow(k, s)) / h;
+}
+
+/* Inverse-CDF sampling: draw u uniform in [0,1) and binary-search the first
+ * rank k with cdf[k] >= u. Rank k is used directly as page number k, which is
+ * fine because no replacement policy looks at the numeric value of a page. */
+static int zipfSample(const double *cdf, int npages)
+{
+	double u = (double)rand() / RAND_MAX;
+	int lo = 1, hi = npages;
+	while (lo < hi) {
+		int mid = (lo + hi) / 2;
+		if (cdf[mid] >= u) hi = mid;      /* answer is mid or to the left  */
+		else               lo = mid + 1;  /* answer is strictly to the right */
+	}
+	return lo;
+}
+
 void genMine(Ref *out, long n, int npages, double pwrite, unsigned seed)
 {
-	genRandom(out, n, npages, pwrite, seed); /*TODO: placeholder */
+	srand(seed);
+	double *cdf = malloc((npages + 1) * sizeof *cdf);
+	if (cdf == NULL) { fprintf(stderr, "malloc failed\n"); exit(1); }
+	buildZipfCdf(cdf, npages, ZIPF_S);
+
+	long filled = 0;
+	int scan = 0;                          /* 0 = OLTP phase, 1 = scan phase */
+	while (filled < n) {
+		if (!scan) {
+			/* OLTP: Zipf-distributed pages, writes with probability pwrite */
+			int len = OLTP_LEN_MIN + rand() % (OLTP_LEN_MAX - OLTP_LEN_MIN + 1);
+			for (int j = 0; j < len && filled < n; j++, filled++) {
+				out[filled].page = zipfSample(cdf, npages);
+				out[filled].is_write = ((double)rand() / RAND_MAX) < pwrite;
+			}
+		} else {
+			/* Report query: one read-only pass over SCAN_LEN consecutive pages */
+			int len = SCAN_LEN_MIN + rand() % (SCAN_LEN_MAX - SCAN_LEN_MIN + 1);
+			int start = npages / 2 + rand() % (npages / 2 - len + 1);
+			for (int j = 0; j < len && filled < n; j++, filled++) {
+				out[filled].page = start + j;
+				out[filled].is_write = 0;
+			}
+		}
+		scan = !scan;                      /* alternate phases */
+	}
+	free(cdf);
 }

@@ -23,13 +23,16 @@ typedef int (*victimFn)(Frame *frame, int nframes, void *state);
 typedef struct {int next_victim;} FifoState;
 typedef struct {int hand;} ESCState;
 // typedef struct {int max_count;}MFUState;
+typedef struct {int hand;} SRState; // Scan-Resistant ESC
 
 int fifoVictim	(Frame *frame, int nframes, void *state);
 int escVictim	(Frame *frame, int nframes, void *state);
 int mfuVictim	(Frame *frame, int nframes, void *state);
+int srVictim	(Frame *frame, int nframes, void *state);
 
 void escHit	(Frame *frame, int idx);
 void mfuHit	(Frame *frame, int idx);
+void srHit	(Frame *frame, int idx);
 
 typedef struct {
 	const char *name; // "FIFO", "MFU", "ESC",used to table

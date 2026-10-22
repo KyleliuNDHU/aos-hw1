@@ -20,7 +20,7 @@ plot:
 	python scripts/plot.py results/random.csv results/locality.csv results/mine.csv
 
 $(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ -lm
 
 src/%.o: src/%.c src/*.h
 	$(CC) $(CFLAGS) -c -o $@ $<
