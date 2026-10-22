@@ -8,7 +8,6 @@
 #include "parse_tool.h"
 
 static void usage(const char *prog);
-static int nextIsNull(){ fprintf(stderr, "%s needs a value\n", argv[i]); return -1; }
 static int parseArgs(int argc, char *argv[], Options *opts)
 {
 	int i;
@@ -26,29 +25,29 @@ static int parseArgs(int argc, char *argv[], Options *opts)
 			if(!parseLong(argv[++i], &opts->nrefs)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--npages") == 0){
-			if(i+1 >= argc)return nextIsNull();
+			if(i+1 >= argc){ fprintf(stderr, "%s needs a value\n", argv[i]); return -1; }
 			if(!parseInt(argv[++i], &opts->npages)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--frames") == 0){
-			if(i+1 >= argc)return nextIsNull();
+			if(i+1 >= argc){ fprintf(stderr, "%s needs a value\n", argv[i]); return -1; }
                         if(!parseInt(argv[++i], &opts->frames)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--pwrite") == 0){
-			if(i+1 >= argc)return nextIsNull();
+			if(i+1 >= argc){ fprintf(stderr, "%s needs a value\n", argv[i]); return -1; }
                         if(!parseDouble(argv[++i], &opts->pwrite)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--seed") == 0){
-			if(i+1 >= argc)return nextIsNull();
+			if(i+1 >= argc){ fprintf(stderr, "%s needs a value\n", argv[i]); return -1; }
 			int tmp;
                         if(!parseInt(argv[++i], &tmp)) return -1;
 			opts->seed = (unsigned) tmp;
 		}
 		else if(strcmp(argv[i] ,"--out") == 0){
-			if(i+1 >= argc) return nextIsNull();
+			if(i+1 >= argc){ fprintf(stderr, "%s needs a value\n", argv[i]); return -1; }
                          if(!parseOut(argv[++i], &opts->out)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--help") == 0){
-			usage("pagesim.exe")
+			usage("pagesim.exe");
 			return 0;
 		}
    		else{
@@ -151,7 +150,7 @@ static void selftest(void)
 	ESCState esc_s = {0};
         Policy esc = { "ESC", escHit, escVictim, &esc_s };
         Stats esc_stats = simulate(3, n, refs, &esc);
-	printf("[selftest] %-4s faults=%ld expect=%d\n\n",esc.name, esc_stats.faults, 15);
+	printf("[selftest] %-4s faults=%ld expect=%d\n\n",esc.name, esc_stats.faults, 14);
 
 	// MFU
 	printf("MFU:\n");

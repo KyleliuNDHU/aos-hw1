@@ -92,7 +92,7 @@ int parseDouble(const char *s, double *out) {
     return 1; // 成功
 }
 
-int parseGen(const char *s, char **out)
+int parseGen(const char *s, const char **out)
 {
 	if(strcmp(s, "random") && strcmp(s, "locality") && strcmp(s, "mine"))
 	{
@@ -103,7 +103,7 @@ int parseGen(const char *s, char **out)
 	return 1;
 }
 
-int parseOut(const char *s, char **out)
+int parseOut(const char *s, const char **out)
 {	
 	/*
         if(strcmp(s, "stdout"))
