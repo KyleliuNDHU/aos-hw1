@@ -85,6 +85,8 @@ static int runExperiment(Options *opts)
 		fprintf(stderr, "malloc failed\n");
 		return 1;
 	}
+
+	gen(refs, opts->nrefs, opts->npages, opts->pwrite, opts->seed);
 	
 	FILE *out = stdout;
 	if(opts->out != NULL)

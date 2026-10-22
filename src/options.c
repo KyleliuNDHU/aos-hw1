@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "options.h"
 
 Options defaultOptions()
