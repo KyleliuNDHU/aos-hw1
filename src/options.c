@@ -1,13 +1,15 @@
 #include "options.h"
 
-void optionsInit(Options *opts)
+Options defaultOptions()
 {
-	opts -> selftest = 0;
-	opts -> gen = "random";
-	opts -> nrefs = 150000; 
-	opts -> npages = 1500;	
-	opts -> frames = 0;	
-	opts -> pwrite = 0.3;
-	opts -> seed = 1;
-	opts -> out = NULL;
+	return (Options){
+		.selftest = 0,
+		.gen = "random",
+		.nrefs = 150000,
+		.npages = 1500,
+		.frames = 0,
+		.pwrite = 0.3,
+		.seed = 1,
+		.out = NULL
+	};
 }

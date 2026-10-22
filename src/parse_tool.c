@@ -3,7 +3,7 @@
 //#include <limits.h>
 #include <string.h>
 #include <stdio.h>
-#include "parse-tool.h"
+#include "parse_tool.h"
 
 int parseLong(const char *s, long *out)
 {
@@ -92,18 +92,18 @@ int parseDouble(const char *s, double *out) {
     return 1; // 成功
 }
 
-int parseGen(const char *s, char *out)
+int parseGen(const char *s, char **out)
 {
 	if(strcmp(s, "random") && strcmp(s, "locality") && strcmp(s, "mine"))
 	{
 		fprintf(stderr, "argument error (gen): can't recognize this %s", s);
 		return 0;
 	}
-        out = s;
+        *out = s;
 	return 1;
 }
 
-int parseOut(const char *s, char *out)
+int parseOut(const char *s, char **out)
 {	
 	/*
         if(strcmp(s, "stdout"))
@@ -114,6 +114,6 @@ int parseOut(const char *s, char *out)
 	*/
 	
 	if (s == NULL){fprintf(stderr, "parseOut Error: no file to write in"); return 0;}
-	out = s;
+	*out = s;
 	return 1;
 }

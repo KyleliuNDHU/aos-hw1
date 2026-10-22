@@ -44,7 +44,7 @@ static int findEmpty(const Frame *frame, int nframes)
         return -1;
 }
 
-Stats simulate (int nframes, long n, Ref *refs, Policy *policy)
+Stats simulate (int nframes, long n, const Ref *refs, Policy *policy)
 /**    <<__ASSUMPTION__>>
  * 1. dirty bit set 1 when ref is a write access(is_write == 1)
  * 2. ref set at hit and write in from disk; clear at escVictim (if have 2nd Round scan)

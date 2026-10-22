@@ -10,39 +10,45 @@
 static int parseArgs(int argc, char *argv[], Options *opts)
 {
 	int i;
-	for(i=0; i<argc; i++)
-	{	
-		if(strcmp(argv[i] ,"--selftest":) == 0)
+	for(i=1; i<argc; i++)
+	{
+		if(strcmp(argv[i] ,"--selftest") == 0){
 				opts->selftest = 1;
-
-		else if(strcmp(argv[i] ,"--gen") == 0)
-			if(!parseGen(argv[++i], opts->gen)) return -1;
-		
-		else if(strcmp(argv[i] ,"--nrefs") == 0)
+		}
+		else if(strcmp(argv[i] ,"--gen") == 0){
+			if(i+1 < argc)return -1;
+			if(!parseGen(argv[++i], &opts->gen)) return -1;
+		}
+		else if(strcmp(argv[i] ,"--nrefs") == 0){
+			if(i+1 < argc)return -1;
 			if(!parseLong(argv[++i], &opts->nrefs)) return -1;
-		
-		else if(strcmp(argv[i] ,"--npages") == 0)
-                         if(!parseInt(argv[++i], &opts->npages)) return -1;
-
-		else if(strcmp(argv[i] ,"--frames") == 0)
-                         if(!parseInt(argv[++i], &opts->frames)) return -1;
-
-		else if(strcmp(argv[i] ,"--pwrite") == 0)
-                         if(!parseDouble(argv[++i], &opts->pwrite)) return -1;
-				
-		else if(strcmp(argv[i] ,"--seed") == 0)
-                         if(!parseInt(argv[++i], &opts->seed)) return -1;
-		
-		else if(strcmp(argv[i] ,"--out") == 0)
-                         if(!parseOut(argv[++i], opts->out)) return -1;
-				
-		else if(strcmp(argv[i] ,"--help") == 0)
+		}
+		else if(strcmp(argv[i] ,"--npages") == 0){
+			if(i+1 < argc)return -1;
+			if(!parseInt(argv[++i], &opts->npages)) return -1;
+		}
+		else if(strcmp(argv[i] ,"--frames") == 0){
+			if(i+1 < argc)return -1;
+                        if(!parseInt(argv[++i], &opts->frames)) return -1;
+		}
+		else if(strcmp(argv[i] ,"--pwrite") == 0){
+			if(i+1 < argc)return -1;
+                        if(!parseDouble(argv[++i], &opts->pwrite)) return -1;
+		}
+		else if(strcmp(argv[i] ,"--seed") == 0){
+			if(i+1 < argc)return -1;
+                        if(!parseInt(argv[++i], &opts->seed)) return -1;
+		}
+		else if(strcmp(argv[i] ,"--out") == 0){
+                         if(!parseOut(argv[++i], &opts->out)) return -1;
+		}
+		else if(strcmp(argv[i] ,"--help") == 0){
 			return -1;
-		
-   		else
+		}
+   		else{
 			fprintf(stderr, "command error: can't recognize this %s", argv[i]);
 			return -1;
-		
+		}
 	}
 	return 0;
 }
@@ -53,7 +59,7 @@ static void usage(const char *prog)
 	fprintf(stderr, "	%s --gen random|locality|mine --npages N --frames N --pwrite P(0<=P<=1) --seed S --out stdout(default)\n", prog);
 }
 
-typedef void (*GenFn) (Ref*, long, int, double, unsigned)
+typedef void (*GenFn) (Ref*, long, int, double, unsigned);
 
 static GenFn pickGen(const char *name)
 {
@@ -75,9 +81,9 @@ static int runExperiment(Options *opts)
 		return 1;
 	}
 	
-	File *out = stdout;
+	FILE *out = stdout;
 	if(opts->out != NULL)
-		out = fopen(opts->out, 'w');
+		out = fopen(opts->out, "w");
 
 	if(out == NULL)
 	{
@@ -93,18 +99,18 @@ static int runExperiment(Options *opts)
 	int max_frames = opts->frames ? opts->frames : 100;
 	
 	int nfs; // number of frames
-	for(nfs = min_frames; nfs <= max_frames; k+=10)
+	for(nfs = min_frames; nfs <= max_frames; nfs+=10)
 	{
-		FifoState *fifo_st = {0};
-		ESCState *esc_st = {0};
+		FifoState fifo_st = {0};
+		ESCState esc_st = {0};
 		
-		Policy policys[] = {{"FIFO", NULL, fifoVictim, fifo_st}, {"ESC", escHit, escVictim, esc_st}, {"MFU", mfuHit, mfuVictim, NULL}};
+		Policy policys[] = {{"FIFO", NULL, fifoVictim, &fifo_st}, {"ESC", escHit, escVictim, &esc_st}, {"MFU", mfuHit, mfuVictim, NULL}};
 		
 		int npolicys = sizeof policys / sizeof policys[0];
 		for(int k=0; k<npolicys; k++)
 		{
-			Stats ss = simulate (nfs, opts->nrefs, Rrefs, policys[k]);
-			fprintf(out, "%s,%s,%d,%ld,%ld,%ld",opts->gen, policys[k].name, opts->frames, ss.faults, ss.interrupts, ss.disk_writes);
+			Stats ss = simulate (nfs, opts->nrefs, refs, &policys[k]);
+			fprintf(out, "%s,%s,%d,%ld,%ld,%ld\n",opts->gen, policys[k].name, nfs, ss.faults, ss.interrupts, ss.disk_writes);
 		}
 	}
 
@@ -113,7 +119,7 @@ static int runExperiment(Options *opts)
 	refs = NULL;
 	return 0;
 }
-static void selftest(const Options *opts, const Ref *refs)
+static void selftest()
 {
 	
     	/*int seq[] = {7,0,1,2,0,3,0,4,2,3,0,3,2,1,2,0,1,7,0,1};
@@ -130,34 +136,36 @@ static void selftest(const Options *opts, const Ref *refs)
     	FifoState fs = {0};
    	Policy fifo = { "FIFO", NULL, fifoVictim, &fs };
     	Stats fifo_stats = simulate(opts->frames, opts->nrefs, refs, &fifo);
-   	printf("[selftest] %s, faults=%ld, disk_writes=%d, interrupts=%d\n\n",fifo.name, fifo_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts);
+   	printf("[selftest] %s, faults=%ld, disk_writes=%ld, interrupts=%ld\n\n",fifo.name, fifo_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts);
 
 	// ESC
 	printf("ESC:\n");
 	ESCState esc_s = {0};
         Policy esc = { "ESC", escHit, escVictim, &esc_s };
         Stats esc_stats = simulate(opts->frames, opts->nrefs, refs, &esc);
-	printf("[selftest] %s, faults=%ld, disk_writes=%d, interrupts=%d\n\n",fifo.name, fifo_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts
+	printf("[selftest] %s, faults=%ld, disk_writes=%ld, interrupts=%ld\n\n",esc.name, esc_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts
 
 	// MFU
 	printf("MFU:\n");
 	Policy mfu = { "MFU", mfuHit, mfuVictim, NULL};
 	Stats mfu_stats = simulate(opts->frames, opts->nrefs, refs, &mfu);
-	printf("[selftest] %s, faults=%ld, disk_writes=%d, interrupts=%d\n\n",fifo.name, fifo_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts
+	printf("[selftest] %s, faults=%ld, disk_writes=%ld, interrupts=%ld\n\n",mfu.name, mfu_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts
 }
 
 
 int main(int argc, char *argv[])
 {
-	Options *opts;
-	optionsInit(opts);
+	Options opts = defaultOptions();
 
-	if (argc >= 2 && strcmp(argv[1], "--selftest") == 0) 
+	if(parseArgs(argc, argv, &opts) < 0)
 	{
-		if(parseArgs(argc, argv, opts) < 0)
-			usage(argv[0])
-			return 1;
-		selftest(opts)
-		return 0;
+		usage(argv[0])
+		return 1;
 	}
+	
+	int run_fail = 0;
+	if(opts.selftest){selftest()};
+	else {run_fail = runExperiment(&opts)};
+
+	return run_fail ? 1 : 0;
 }

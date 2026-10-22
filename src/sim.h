@@ -4,6 +4,6 @@
 #include "refgen.h"
 #include "policy.h"
 
-Stats simulate (int nframes, long n, Ref *refs, Policy *policy);
+Stats simulate (int nframes, long n, const Ref *refs, Policy *policy);
 
 #endif

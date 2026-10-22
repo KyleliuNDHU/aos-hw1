@@ -1,3 +1,4 @@
+
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
@@ -12,6 +13,6 @@ typedef struct {
 	const char *out;	// NULL = stdout
 } Options;
 
-void optionsInit(Options *opts);
+Options defaultOptions();
 
 #endif
