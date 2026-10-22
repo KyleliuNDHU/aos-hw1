@@ -6,7 +6,6 @@
 #include "sim.h"
 #include "options.h"
 #include "parse_tool.h"
-
 /* main.c - command-line front end.
  * Parses options, generates one reference string, runs every policy for
  * every frame count and writes one CSV row per (policy, frames). */
@@ -55,7 +54,7 @@ static int parseArgs(int argc, char *argv[], Options *opts)
 		}
 		else if(strcmp(argv[i] ,"--help") == 0){
 			usage(argv[0]);
-			exit(0);                     /* help is not an error */
+			exit(0);	/* help is not an error */
 		}
    		else{
 			fprintf(stderr, "command error: can't recognize this %s\n", argv[i]);
@@ -87,10 +86,10 @@ static GenFn pickGen(const char *name)
  * a CSV row each. Policy state is re-created per frame count so no clock hand
  * leaks from one run into the next. Returns 0 on success. */
 static int runExperiment(Options *opts)
-{	
+{
 	GenFn gen = pickGen(opts->gen);
 	if(gen == NULL){fprintf(stderr, "unknown generator: %s\n", opts->gen); return 1;}
-	
+
 	Ref *refs = malloc(opts->nrefs * sizeof *refs);
 	if(refs == NULL)
 	{
@@ -99,7 +98,7 @@ static int runExperiment(Options *opts)
 	}
 
 	gen(refs, opts->nrefs, opts->npages, opts->pwrite, opts->seed);
-	
+
 	FILE *out = stdout;
 	if(opts->out != NULL)
 		out = fopen(opts->out, "w");
@@ -111,12 +110,12 @@ static int runExperiment(Options *opts)
 		refs = NULL;
 		return 1;
 	}
-	
+
 	fprintf(out, "gen,algo,frames,faults,interrupts,disk_writes\n");
-	
+
 	int min_frames = opts->frames ? opts->frames : 10;
 	int max_frames = opts->frames ? opts->frames : 100;
-	
+
 	int nfs; // number of frames
 	for(nfs = min_frames; nfs <= max_frames; nfs+=10)
 	{
@@ -139,11 +138,13 @@ static int runExperiment(Options *opts)
 	refs = NULL;
 	return 0;
 }
+
 /* Known-answer test: textbook reference string (Silberschatz ch.10) with 3
  * frames, all reads. Under assumptions A1-A3 the expected page faults are
  * FIFO 15, ESC 14, MFU 15. */
 static void selftest(void)
 {
+
     	int seq[] = {7,0,1,2,0,3,0,4,2,3,0,3,2,1,2,0,1,7,0,1};
     	long n = sizeof seq / sizeof seq[0];
 	Ref refs[20];
@@ -152,6 +153,7 @@ static void selftest(void)
 		refs[i].page = seq[i] + 1; 
 		refs[i].is_write = 0; 
 	}
+
 	// FIFO
 	printf("FIFO:\n");
     	FifoState fs = {0};

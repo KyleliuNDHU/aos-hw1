@@ -5,7 +5,7 @@
 int fifoVictim(Frame *frame, int nframes, void *state)
 {
 	(void) frame;
-	
+
 	FifoState *fs = (FifoState*) state;
 
 	int victim = fs->next_victim;
@@ -25,7 +25,7 @@ int escVictim(Frame *frame, int nframes, void *state)
 	ESCState *esc_state = (ESCState*) state;
 	// Suppose the hand of ESCState point to the start frame, 
 	// means the frame that is pointed by hand initially is the first frame need to check.
-	
+
 	int p = esc_state -> hand; 	// used in the loop below 
 	int victim = p;			// the victim candidate
 
@@ -40,7 +40,7 @@ int escVictim(Frame *frame, int nframes, void *state)
 		}
 		p = (p+1) % nframes;
 	}
-	
+
 	p = esc_state -> hand;
 	for(i=0; i<nframes; i++)
 	{
@@ -53,7 +53,7 @@ int escVictim(Frame *frame, int nframes, void *state)
 		frame[p].ref = 0;
 		p = (p+1) % nframes;
 	}
-	
+
 	p = esc_state -> hand;
 	for(i=0; i<nframes; i++)
 	{
@@ -77,23 +77,23 @@ int escVictim(Frame *frame, int nframes, void *state)
                 p = (p+1) % nframes;
        	}
 
-	return esc_state->hand;   /* unreachable: pass 4 always succeeds; satisfies the compiler */
+	return esc_state->hand; /* unreachable: pass 4 always succeeds; satisfies the compiler */
 }
 
 /* MFU (slides pp.69): replace the page with the largest reference count;
  * ties go to the page loaded earliest (FIFO order via loaded_at). */
 int mfuVictim(Frame *frame, int nframes, void *state)
 {
-	(void) state;                 /* MFU keeps no state between faults */
+	(void) state;	/* MFU keeps no state between faults */
 	int victim = 0;
-	
+
 	int i;
 	for(i=0; i<nframes; i++)
 	{
 		if(frame[i].count > frame[victim].count || (frame[i].count == frame[victim].count && frame[i].loaded_at < frame[victim].loaded_at))
-			victim = i;		
+			victim = i;
 	}
-	
+
 	return victim;
 }
 
