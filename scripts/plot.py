@@ -23,9 +23,10 @@ import matplotlib.pyplot as plt # pyplot = the plotting API; "plt" is the conven
 
 # Each entry: (CSV column name, text for the y-axis label)
 METRICS = [
-    ("faults",      "Page faults"),
-    ("interrupts",  "Interrupts"),
-    ("disk_writes", "Disk writes (pages)"),
+    	("faults",      "Page faults"),
+    	("interrupts",  "Interrupts"),
+    	("disk_writes", "Disk writes (pages)"),
+	("cost", "Cost (interrupts + disk writes)"),
 ]
 
 
@@ -44,6 +45,12 @@ def load(paths):
                 data[row["gen"]][row["algo"]].append(row)
     return data
 
+def value(row, key):
+	"""Retrun metric 'key' of one CSV row as int. 'cost' is derived:
+	interrupts + disk_writes, the cost definition in the assignment."""
+	if key == "cost":
+		return int(row["interrupts"]) + int(row["disk_writes"])
+	return int(row[key])
 
 def plot_one(gen, algos, key, label, outdir):
     """Draw one figure: metric `key` vs. frames for reference string `gen`.
@@ -55,7 +62,7 @@ def plot_one(gen, algos, key, label, outdir):
     for algo, rows in algos.items():
         rows = sorted(rows, key=lambda r: int(r["frames"]))   # make sure x is increasing
         x = [int(r["frames"]) for r in rows]        # list comprehension: build a list from rows
-        y = [int(r[key]) for r in rows]
+        y = [value(r, key) for r in rows]
         ax.plot(x, y, marker="o", label=algo)       # line + circle markers; label feeds the legend
     ax.set_xlabel("Number of frames")
     ax.set_ylabel(label)
