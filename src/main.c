@@ -7,7 +7,14 @@
 #include "options.h"
 #include "parse_tool.h"
 
+/* main.c - command-line front end.
+ * Parses options, generates one reference string, runs every policy for
+ * every frame count and writes one CSV row per (policy, frames). */
+
 static void usage(const char *prog);
+
+/* Fill *opts from argv. Returns 0 on success, -1 on any error (a message has
+ * already been printed). Options that take a value consume the next argv. */
 static int parseArgs(int argc, char *argv[], Options *opts)
 {
 	int i;
@@ -47,8 +54,8 @@ static int parseArgs(int argc, char *argv[], Options *opts)
                          if(!parseOut(argv[++i], &opts->out)) return -1;
 		}
 		else if(strcmp(argv[i] ,"--help") == 0){
-			usage("pagesim.exe");
-			return 0;
+			usage(argv[0]);
+			exit(0);                     /* help is not an error */
 		}
    		else{
 			fprintf(stderr, "command error: can't recognize this %s\n", argv[i]);
@@ -66,6 +73,7 @@ static void usage(const char *prog)
 
 typedef void (*GenFn) (Ref*, long, int, double, unsigned);
 
+/* Map a generator name to its function; NULL if unknown. */
 static GenFn pickGen(const char *name)
 {
 	if(strcmp(name, "random") == 0)		return genRandom;
@@ -74,6 +82,10 @@ static GenFn pickGen(const char *name)
 	return NULL;
 }
 
+/* Generate one reference string (shared by every run so the comparison is
+ * paired), then for frames = 10..100 run FIFO, ESC, MFU and SR-ESC and write
+ * a CSV row each. Policy state is re-created per frame count so no clock hand
+ * leaks from one run into the next. Returns 0 on success. */
 static int runExperiment(Options *opts)
 {	
 	GenFn gen = pickGen(opts->gen);
@@ -127,9 +139,11 @@ static int runExperiment(Options *opts)
 	refs = NULL;
 	return 0;
 }
+/* Known-answer test: textbook reference string (Silberschatz ch.10) with 3
+ * frames, all reads. Under assumptions A1-A3 the expected page faults are
+ * FIFO 15, ESC 14, MFU 15. */
 static void selftest(void)
 {
-	
     	int seq[] = {7,0,1,2,0,3,0,4,2,3,0,3,2,1,2,0,1,7,0,1};
     	long n = sizeof seq / sizeof seq[0];
 	Ref refs[20];
@@ -138,15 +152,12 @@ static void selftest(void)
 		refs[i].page = seq[i] + 1; 
 		refs[i].is_write = 0; 
 	}
-	//printf("Reference generate pattern: %s\n", opts->gen);
-
 	// FIFO
 	printf("FIFO:\n");
     	FifoState fs = {0};
    	Policy fifo = { "FIFO", NULL, fifoVictim, &fs };
     	Stats fifo_stats = simulate(3, n, refs, &fifo);
    	printf("[selftest] %-4s faults=%ld expect=%d\n\n", fifo.name, fifo_stats.faults, 15);
-	//printf("[selftest] %-4s, faults=%ld, disk_writes=%ld, interrupts=%ld\n\n",fifo.name, fifo_stats.faults, fifo_stats.disk_writes, fifo_stats.interrupts);
 
 	// ESC
 	printf("ESC:\n");

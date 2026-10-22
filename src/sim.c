@@ -1,20 +1,38 @@
 /**
- * 1. Initially, every frames are empty (frame.page=0)
- * 2. For each reference, determine hit or miss.
- * 3. Hit: if is_write then set 1 to dirty, otherwise do nothing.
- *         And Some Algo. need to update their state when hit occurs,
- *         so for convenience, we will alway info POLICY.
- * 4. Miss,but there are empty frames exist:
- *         fill into that frame, and do "fault++, interrupts++" to Stats;
- *         Same, notify POLICY, but by diff. event:"load a page inside."
- * 5. Miss, and no empty frame: Ask POLICY for a victim.
- *         If the dirty bit of victim is 1 will need to do aditional operations -- disk_write++, interrupts++,
- *         otherwise, just put the new page into the frame where is used to be the victim,
- *         (dirty = is_write, ref_bit=1, count=1), faults++, interrupts++,
- *         and last thing: notify POLICY about the new loaded page.
- * 6. Return three variables of Stats.
- * 7. all specific behavior of algorithm are done by the function of POLICY,
- *    simulate(sim)itself don't know which algorithm is running now.
+ * sim.c - page replacement simulator core.
+ *
+ * simulate() replays one reference string against a fixed number of frames
+ * and counts page faults, disk writes and interrupts. It knows nothing about
+ * any particular algorithm: every policy-specific decision goes through the
+ * Policy function pointers (on_hit, victim).
+ *
+ * Contract:
+ *  1. All frames start empty (page == 0 marks an empty frame; pages are 1..N).
+ *  2. For each reference decide hit or miss by a linear search of the frames
+ *     (at most 100 frames, so this is cheap enough).
+ *  3. Hit: a write sets the dirty bit; the policy is notified via on_hit so it
+ *     can update its own bookkeeping (ESC sets ref, MFU/SR-ESC bump count).
+ *  4. Miss with an empty frame: load into it. faults++, interrupts++.
+ *  5. Miss with no empty frame: ask the policy for a victim. If the victim is
+ *     dirty it must be written back first: disk_writes++, interrupts++.
+ *     Then load the new page: dirty = is_write, ref = 1, count = 1,
+ *     loaded_at = current time. faults++, interrupts++.
+ *  6. Return the three counters.
+ *
+ * Assumptions (also stated in the report):
+ *  A1. dirty bit: set when the page is loaded by a write or written on a hit
+ *      (hardware sets it on every write, slides pp.35); cleared only when the
+ *      page is written back, i.e. when it is evicted.
+ *  A2. reference bit: set to 1 on load and on every hit (the access that
+ *      caused the fault is itself a reference, slides pp.58); cleared only by
+ *      the ESC/SR-ESC hand while scanning for a victim (slides pp.63). No
+ *      periodic clearing by a timer.
+ *  A3. MFU count: 1 on load, +1 per hit, never reset; ties broken FIFO using
+ *      loaded_at (the global reference counter, cf. slides pp.53).
+ *  A4. interrupts = page faults + dirty write-backs: every time the OS has to
+ *      be invoked counts once (trap on fault, I/O for write-back).
+ *  A5. Cold-start misses count as page faults.
+ *  A6. is_write of each reference is drawn with probability pwrite.
  */
 
 #include <stdio.h>
@@ -23,7 +41,7 @@
 #include "policy.h"
 #include "refgen.h"
 
-//return the frame index of page locate at; if miss: return -1
+/* Return the frame index holding `page`, or -1 if it is not resident. */
 static int findPage(const Frame *frame, int nframes, int page)
 {
         int i;
@@ -34,6 +52,7 @@ static int findPage(const Frame *frame, int nframes, int page)
         return -1;
 }
 
+/* Return the index of the first empty frame (page == 0), or -1 if full. */
 static int findEmpty(const Frame *frame, int nframes)
 {
         int i;
@@ -45,15 +64,8 @@ static int findEmpty(const Frame *frame, int nframes)
 }
 
 Stats simulate (int nframes, long n, const Ref *refs, Policy *policy)
-/**    <<__ASSUMPTION__>>
- * 1. dirty bit set 1 when ref is a write access(is_write == 1)
- * 2. ref set at hit and write in from disk; clear at escVictim (if have 2nd Round scan)
- * 3. frames initial empty: all value clear to 0.
- * 4. cold-start misses count as page faults: frames start empty, and filling an empty frame is a fault with no victim.
- * 5. is_write is set by the probability of pwrite.
- */
-{	
-	long clock=0;
+{
+	long clock = 0;  /* global time: index of the current reference */
         Stats st = {0, 0, 0};
         Frame *frame = calloc(nframes, sizeof(Frame));
 

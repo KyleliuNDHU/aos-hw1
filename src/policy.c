@@ -1,5 +1,7 @@
 #include "policy.h"
 
+/* FIFO: replace the frame loaded earliest. A circular pointer over the
+ * frames is equivalent to a queue because frames are filled in order. */
 int fifoVictim(Frame *frame, int nframes, void *state)
 {
 	(void) frame;
@@ -11,18 +13,14 @@ int fifoVictim(Frame *frame, int nframes, void *state)
 	return victim;
 }
 
+/* Enhanced second-chance (slides pp.64-65). Classes are (ref, dirty).
+ * Up to four passes starting at the clock hand:
+ *   pass 1: first (0,0)            -- nothing is modified
+ *   pass 2: first (0,1); every (1,x) passed on the way gets ref cleared
+ *   pass 3: first (0,0)            -- must exist now if any clean page exists
+ *   pass 4: first (0,1)
+ * The hand stops just after the victim. The hand does NOT move on a hit. */
 int escVictim(Frame *frame, int nframes, void *state)
-/**
- * ESC Rule: (ref, dirty)
- * 1st Round find (0, 0), if exists then update hand to the next, 
- * and return idx of the frame.
- * 
- * 2nd Round find (0, 1), if exists do the same thing immediately, 
- * but out of that condtion will clear ref bit of the frame at which scan idx.
- * 
- * 3rd Round same as 1st Round.
- * 4th Round same as 2nd Round without the action of clear ref bit. 
- */
 {
 	ESCState *esc_state = (ESCState*) state;
 	// Suppose the hand of ESCState point to the start frame, 
@@ -79,9 +77,11 @@ int escVictim(Frame *frame, int nframes, void *state)
                 p = (p+1) % nframes;
        	}
 
-	return esc_state->hand; // (trash code) this line never run, just for following the request of C language.
+	return esc_state->hand;   /* unreachable: pass 4 always succeeds; satisfies the compiler */
 }
 
+/* MFU (slides pp.69): replace the page with the largest reference count;
+ * ties go to the page loaded earliest (FIFO order via loaded_at). */
 int mfuVictim(Frame *frame, int nframes, void *state)
 {
 	(void) state;                 /* MFU keeps no state between faults */
@@ -97,11 +97,13 @@ int mfuVictim(Frame *frame, int nframes, void *state)
 	return victim;
 }
 
+/* ESC on hit: hardware sets the reference bit; the hand does not move. */
 void escHit     (Frame *frame, int idx)
 {
 	frame[idx].ref = 1;
 }
 
+/* MFU on hit: one more reference to this page. */
 void mfuHit     (Frame *frame, int idx)
 {
 	frame[idx].count++;
@@ -148,6 +150,7 @@ int srVictim(Frame *frame, int nframes, void *state)
 	return v;
 }
 
+/* SR-ESC on hit: set the reference bit and count the re-reference. */
 void srHit(Frame *frame, int idx)
 {
 	frame[idx].ref = 1;
