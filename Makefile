@@ -16,8 +16,10 @@ run: $(TARGET)
 	./$(TARGET) --gen locality --out results/locality.csv
 	./$(TARGET) --gen mine --out results/mine.csv
 
+PYTHON ?= py
+
 plot:
-	python scripts/plot.py results/random.csv results/locality.csv results/mine.csv
+	$(PYTHON) scripts/plot.py results/random.csv results/locality.csv results/mine.csv
 
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ -lm
